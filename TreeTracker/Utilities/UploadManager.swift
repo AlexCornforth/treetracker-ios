@@ -32,7 +32,7 @@ class UploadManager: UploadManaging {
     private lazy var uploadOperationQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 1
-        queue.qualityOfService = .userInitiated
+        queue.qualityOfService = .background
         queue.name = "UploadManagerQueue"
         return queue
     }()
@@ -53,10 +53,17 @@ class UploadManager: UploadManaging {
         isUploading = true
         delegate?.uploadManagerDidStartUploadingTrees(self)
 
-        let uploadOperation = UploadOperation(
-            planterUploadService: planterUploadService,
-            treeUploadService: treeUploadService
-        )
+        let uploadOperation = BlockOperation {
+            for value in 0...100 {
+                sleep(1)
+                print(value)
+            }
+        }
+//
+//        let uploadOperation = UploadOperation(
+//            planterUploadService: planterUploadService,
+//            treeUploadService: treeUploadService
+//        )
 
         let finishOperation = BlockOperation {
             DispatchQueue.main.async {
@@ -82,6 +89,10 @@ class UploadManager: UploadManaging {
         Logger.log("UploadManager: Uploads stopped")
         uploadOperationQueue.cancelAllOperations()
         stopUpoading()
+    }
+
+    deinit {
+        print("UploadManager deinit")
     }
 }
 

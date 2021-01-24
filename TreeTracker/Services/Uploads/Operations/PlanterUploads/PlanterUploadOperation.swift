@@ -14,7 +14,7 @@ class PlanterUploadOperation: Operation {
     private lazy var planterUploadQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 1
-        queue.qualityOfService = .userInitiated
+        queue.qualityOfService = .background
         queue.name = "PlanterUploadQueue"
         return queue
     }()

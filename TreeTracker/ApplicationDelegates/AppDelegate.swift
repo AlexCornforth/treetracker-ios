@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import AWSS3
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -18,9 +19,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return CoreDataManager()
     }()
 
+    let awsS3Client = AWSS3Client()
+
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
 
-        AWSS3Client().registerS3CLient()
+        awsS3Client.registerS3CLient()
 
         // For iOS13+ we setup the root coordinator in the scene delegate
         guard #available(iOS 13.0, *) else {
@@ -32,7 +35,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
             rootCoordinator = RootCoordinator(
                 configuration: configuration,
-                coreDataManager: coreDataManager
+                coreDataManager: coreDataManager,
+                awsS3Client: awsS3Client
             )
             rootCoordinator?.start()
 
@@ -63,4 +67,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
     }
 
+    func application(_ application: UIApplication, handleEventsForBackgroundURLSession identifier: String, completionHandler: @escaping () -> Void) {
+        awsS3Client.interceptApplication(
+            application,
+            handleEventsForBackgroundURLSession: identifier,
+            completionHandler: completionHandler
+        )
+    }
 }

@@ -16,7 +16,7 @@ class UploadOperation: Operation {
     private lazy var uploadOperationQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 1
-        queue.qualityOfService = .userInitiated
+        queue.qualityOfService = .background
         queue.name = "UploadQueue"
         return queue
     }()

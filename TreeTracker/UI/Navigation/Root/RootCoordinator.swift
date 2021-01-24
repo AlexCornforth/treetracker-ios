@@ -14,11 +14,13 @@ class RootCoordinator: Coordinator {
     let configuration: CoordinatorConfigurable
     private let coreDataManager: CoreDataManaging
     private let currentPlanterService: CurrentPlanterService
+    private let awsS3Client: AWSS3Client
 
-    required init(configuration: CoordinatorConfigurable, coreDataManager: CoreDataManaging) {
+    required init(configuration: CoordinatorConfigurable, coreDataManager: CoreDataManaging, awsS3Client: AWSS3Client) {
         self.configuration = configuration
         self.coreDataManager = coreDataManager
         self.currentPlanterService = LocalCurrentPlanterService(coreDataManager: coreDataManager)
+        self.awsS3Client = awsS3Client
     }
 
     func start() {
@@ -72,17 +74,20 @@ private extension RootCoordinator {
 
     func homeCoordinator(planter: Planter) -> Coordinator {
 
+        let imageUploadService = AWSS3ImageUploadService(s3Client: awsS3Client)
+        let bundleUploadService = AWSS3BundleUploadService(s3Client: awsS3Client)
+
         let treeUploadService = LocalTreeUploadService(
             coreDataManager: coreDataManager,
-            bundleUploadService: AWSS3BundleUploadService(s3Client: AWSS3Client()),
-            imageUploadService: AWSS3ImageUploadService(s3Client: AWSS3Client()),
+            bundleUploadService: bundleUploadService,
+            imageUploadService: imageUploadService,
             documentManager: DocumentManager()
         )
 
         let planterUploadService = LocalPlanterUploadService(
             coreDataManager: coreDataManager,
-            imageUploadService: AWSS3ImageUploadService(s3Client: AWSS3Client()),
-            bundleUploadService: AWSS3BundleUploadService(s3Client: AWSS3Client()),
+            imageUploadService: imageUploadService,
+            bundleUploadService: bundleUploadService,
             documentManager: DocumentManager(),
             planter: planter
         )

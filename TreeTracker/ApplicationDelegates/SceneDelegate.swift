@@ -38,7 +38,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         rootCoordinator = RootCoordinator(
             configuration: configuration,
-            coreDataManager: appDelegate.coreDataManager
+            coreDataManager: appDelegate.coreDataManager,
+            awsS3Client: appDelegate.awsS3Client
         )
 
         rootCoordinator?.start()

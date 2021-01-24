@@ -15,7 +15,7 @@ class TreeUploadOperation: Operation {
     private lazy var treeUploadQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 1
-        queue.qualityOfService = .userInitiated
+        queue.qualityOfService = .background
         queue.name = "TreeUploadQueue"
         return queue
     }()

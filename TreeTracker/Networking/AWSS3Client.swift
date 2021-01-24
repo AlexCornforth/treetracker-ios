@@ -19,13 +19,19 @@ class AWSS3Client {
         return AWSS3.s3(forKey: Constants.s3ServiceKey)
     }()
 
+    private lazy var transferUtility: AWSS3TransferUtility? = {
+        return AWSS3TransferUtility.s3TransferUtility(forKey: Constants.transferUtilityKey)
+    }()
+
     func registerS3CLient() {
         AWSS3.register(with: serviceConfiguration, forKey: Constants.s3ServiceKey)
+        AWSS3TransferUtility.register(with: serviceConfiguration, forKey: Constants.transferUtilityKey)
     }
 
     func uploadImage(imageData: Data, uuid: String, latitude: Double, logitude: Double, completion: @escaping (Result<String, Error>) -> Void) {
         let key = "\(formattedDate())_\(latitude)_\(logitude)_\(UUID().uuidString)_\(uuid)"
-        put(data: imageData, bucketName: Constants.imagesBucketName, key: key, acl: .publicRead, completion: completion)
+//        put(data: imageData, bucketName: Constants.BucketName.images, key: key, acl: .publicRead, completion: completion)
+        transfer(data: imageData, bucketName: Constants.BucketName.images, key: key, acl: .publicRead, completion: completion)
     }
 
     func uploadBundle(jsonBundle: String, bundleId: String, completion: @escaping (Result<String, Error>) -> Void) {
@@ -36,7 +42,16 @@ class AWSS3Client {
             return
         }
 
-        put(data: jsonData, bucketName: Constants.batchUploadsBucketName, key: key, acl: nil, completion: completion)
+//        put(data: jsonData, bucketName: Constants.BucketName.batchUploads, key: key, acl: nil, completion: completion)
+        transfer(data: jsonData, bucketName: Constants.BucketName.batchUploads, key: key, acl: nil, completion: completion)
+    }
+
+    func interceptApplication(_ application: UIApplication, handleEventsForBackgroundURLSession identifier: String, completionHandler: @escaping () -> Void) {
+        AWSS3TransferUtility.interceptApplication(
+            application,
+            handleEventsForBackgroundURLSession: identifier,
+            completionHandler: completionHandler
+        )
     }
 }
 
@@ -88,15 +103,31 @@ private extension AWSS3Client {
             completion(.success(url))
         }
     }
+
+    func transfer(data: Data, bucketName: String, key: String, acl: AWSS3ObjectCannedACL?, completion: @escaping (Result<String, Error>) -> Void) {
+        transferUtility?.uploadData(data, bucket: bucketName, key: key, contentType: "", expression: nil, completionHandler: { (_, error) in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            let url = "https://\(bucketName).s3.\(AWSCredentials.regionString).amazonaws.com/\(key)"
+            completion(.success(url))
+        })
+    }
 }
 
 // MARK: - Constants
 private extension AWSS3Client {
 
     struct Constants {
-        static let s3ServiceKey: String = "treetracker-s3-service"
-        static let imagesBucketName: String = Configuration.AWS.imagesBucketName
-        static let batchUploadsBucketName: String = Configuration.AWS.batchUploadsBucketName
+
+        static let s3ServiceKey: String = "treetrackerS3Service"
+        static let transferUtilityKey: String = "treetrackerS3TransferUtility"
+
+        struct BucketName {
+            static let images: String = Configuration.AWS.imagesBucketName
+            static let batchUploads: String = Configuration.AWS.batchUploadsBucketName
+        }
     }
 
     struct AWSCredentials {
